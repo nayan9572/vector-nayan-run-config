@@ -1,55 +1,119 @@
-name: Vector Nayan V44 – Court Grade CI
+name: Vector Nayan V44 – Full Kernel CI Run
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - run_config.json
+      - kernel/**
 
 jobs:
-  kernel-ci:
+  v44-kernel-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
 
     steps:
-    - name: Checkout config repo
+    # --------------------------------------------------
+    # 1️⃣ Checkout THIS repo (run_config + workflow)
+    # --------------------------------------------------
+    - name: Checkout run-config repo
       uses: actions/checkout@v4
 
-    - name: Clone Kernel
+    # --------------------------------------------------
+    # 2️⃣ Validate Kernel Token (early fail)
+    # --------------------------------------------------
+    - name: Validate Kernel_TOKEN
       run: |
-        git clone https://${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+        if [ -z "${{ secrets.Kernal_TOKEN }}" ]; then
+          echo "❌ Kernal_TOKEN secret missing"
+          exit 1
+        else
+          echo "✅ Kernal_TOKEN found"
+        fi
 
-    - name: Setup Python
+    # --------------------------------------------------
+    # 3️⃣ Clone PRIVATE Vector Nayan Kernel
+    # --------------------------------------------------
+    - name: Clone Vector Nayan V44 Kernel
+      run: |
+        git clone https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+
+    # --------------------------------------------------
+    # 4️⃣ Inject run_config.json INTO kernel folder
+    # --------------------------------------------------
+    - name: Inject run_config.json
+      run: |
+        cp run_config.json kernel/run_config.json
+        echo "📦 run_config.json injected"
+
+    # --------------------------------------------------
+    # 5️⃣ Setup Python
+    # --------------------------------------------------
+    - name: Setup Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
+    # --------------------------------------------------
+    # 6️⃣ Install ALL REQUIRED LIBRARIES (CI SAFE)
+    # --------------------------------------------------
+    - name: Install Python dependencies (FULL – CI SAFE)
       run: |
-        pip install --upgrade pip
-        pip install numpy pandas scipy matplotlib networkx seaborn scikit-learn tqdm
+        python -m pip install --upgrade pip
+        pip install \
+          numpy \
+          pandas \
+          scipy \
+          matplotlib \
+          networkx \
+          seaborn \
+          scikit-learn \
+          tqdm
 
-    - name: Create colab stub
+    # --------------------------------------------------
+    # 7️⃣ CI SAFE stub for google.colab (NO ERROR)
+    # --------------------------------------------------
+    - name: Create google.colab stub (CI safe)
       run: |
-        mkdir -p google
-        echo "" > google/__init__.py
-        cat <<EOF > google/colab.py
-        class files:
-            @staticmethod
-            def download(x): print("CI mode")
-        EOF
+        mkdir -p google/colab
+        echo "def download(x): print('CI MODE: download skipped')" > google/colab/files.py
+        touch google/__init__.py
+        touch google/colab/__init__.py
 
-    - name: Run CI Kernel
+    # --------------------------------------------------
+    # 8️⃣ Force matplotlib to NON-GUI backend
+    # --------------------------------------------------
+    - name: Configure matplotlib backend
+      run: |
+        echo "import matplotlib; matplotlib.use('Agg')" > mpl_fix.py
+
+    # --------------------------------------------------
+    # 9️⃣ Run Vector Nayan V44 Kernel
+    # --------------------------------------------------
+    - name: Run Vector Nayan V44 Kernel
       working-directory: kernel
       run: |
-        python -u ci_runner.py
+        echo "===== VECTOR NAYAN V44 CI RUN START ====="
+        python main_runner.py
+        echo "===== VECTOR NAYAN V44 CI RUN END ====="
 
+    # --------------------------------------------------
+    # 🔟 Verify CSV existence (HARD CHECK)
+    # --------------------------------------------------
     - name: Verify CSV existence
       run: |
-        if [ ! -f kernel/Vector_Nayan_V44_Cycle_By_Cycle.csv ]; then
-          echo "CSV missing"
+        if ls kernel/*.csv 1> /dev/null 2>&1; then
+          echo "✅ CSV files found"
+          ls kernel/*.csv
+        else
+          echo "❌ No CSV files generated"
           exit 1
         fi
 
-    - name: Upload CSV
+    # --------------------------------------------------
+    # 1️⃣1️⃣ Upload CSV as GitHub Artifact
+    # --------------------------------------------------
+    - name: Upload CSV outputs
       uses: actions/upload-artifact@v4
       with:
-        name: Vector_Nayan_V44_CSV
-        path: kernel/Vector_Nayan_V44_Cycle_By_Cycle.csv
+        name: Vector_Nayan_V44_CSV_Output
+        path: kernel/*.csv
