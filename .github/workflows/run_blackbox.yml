@@ -95,24 +95,24 @@ jobs:
         echo "✅ matplotlib backend set to Agg"
 
     # ==================================================
-    # 9️⃣ HARD SANITY CHECK (FILES)
+    # 9️⃣ HARD SANITY CHECK (FIXED)
     # ==================================================
     - name: Kernel sanity check
       run: |
         echo "📂 Kernel contents:"
         ls kernel
-        echo "🔎 Runner files:"
-        ls kernel | grep -E "runner|main"
-        test -f kernel/runner.py || (echo "❌ runner.py missing" && exit 1)
+        echo "🔎 Runner check:"
+        test -f kernel/main_runner.py || (echo "❌ main_runner.py missing" && exit 1)
+        echo "✅ main_runner.py found"
 
     # ==================================================
-    # 🔟 RUN THE ONLY ALLOWED ENTRY POINT
+    # 🔟 RUN THE ONLY AUTHORITATIVE ENTRY POINT
     # ==================================================
     - name: Run Vector Nayan V44 (AUTHORITATIVE)
-      working-directory: kernel
+      working-directory: kernel 
       run: |
         echo "🚀 VECTOR NAYAN V44 — CI RUN START"
-        python runner.py
+        python main_runner.py
         echo "🏁 VECTOR NAYAN V44 — CI RUN END"
 
     # ==================================================
