@@ -11,28 +11,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout PUBLIC run-config repo
       - name: Checkout run configuration
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.KERNEL_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
+      # 2️⃣ Clone PRIVATE kernel repo using PAT (NO SSH)
       - name: Clone private Vector Nayan kernel
+        env:
+          KERNAL_TOKEN: ${{ secrets.KERNAL_TOKEN }}
         run: |
-          git clone git@github.com:nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+          git clone https://x-access-token:${KERNAL_TOKEN}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
 
+      # 3️⃣ Inject run_config.json into kernel
       - name: Inject run_config.json
         run: |
           cp run_config.json kernel/run_config.json
 
+      # 4️⃣ Run Vector Nayan kernel (black box)
       - name: Run Vector Nayan kernel
         run: |
           python kernel/main_runner.py
 
+      # 5️⃣ Upload ONLY CSV output (user-visible)
       - name: Upload simulation output
         uses: actions/upload-artifact@v4
         with:
