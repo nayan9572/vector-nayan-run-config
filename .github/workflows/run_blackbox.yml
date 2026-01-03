@@ -11,28 +11,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout PUBLIC run-config repo
       - name: Checkout run configuration
         uses: actions/checkout@v4
 
-      # 2️⃣ Clone PRIVATE kernel repo using PAT (NO SSH)
-      - name: Clone private Vector Nayan kernel
-        env:
-          KERNAL_TOKEN: ${{ secrets.Kernal_TOKEN }}
+      # -------------------------------
+      # DEBUG: CHECK SECRET EXISTS
+      # -------------------------------
+      - name: Debug secret presence
         run: |
-          git clone https://x-access-token:${KERNAL_TOKEN}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+          if [ -z "${{ secrets.Kernal_TOKEN }}" ]; then
+            echo "❌ SECRET KERNAL_TOKEN NOT FOUND"
+            exit 1
+          else
+            echo "✅ SECRET KERNAL_TOKEN FOUND"
+            echo "Token length is non-zero"
+          fi
 
-      # 3️⃣ Inject run_config.json into kernel
+      # -------------------------------
+      # CLONE PRIVATE KERNEL (HTTPS + PAT)
+      # -------------------------------
+      - name: Clone private Vector Nayan kernel
+        run: |
+          git clone https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+
+      # -------------------------------
+      # COPY CONFIG INTO KERNEL
+      # -------------------------------
       - name: Inject run_config.json
         run: |
           cp run_config.json kernel/run_config.json
 
-      # 4️⃣ Run Vector Nayan kernel (black box)
+      # -------------------------------
+      # RUN KERNEL
+      # -------------------------------
       - name: Run Vector Nayan kernel
         run: |
           python kernel/main_runner.py
 
-      # 5️⃣ Upload ONLY CSV output (user-visible)
+      # -------------------------------
+      # UPLOAD OUTPUT CSV
+      # -------------------------------
       - name: Upload simulation output
         uses: actions/upload-artifact@v4
         with:
