@@ -11,46 +11,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout public run-config repo
       - name: Checkout run configuration
         uses: actions/checkout@v4
 
-      # -------------------------------
-      # DEBUG: CHECK SECRET EXISTS
-      # -------------------------------
+      # 2️⃣ Debug: confirm secret is visible
       - name: Debug secret presence
         run: |
           if [ -z "${{ secrets.Kernal_TOKEN }}" ]; then
-            echo "❌ SECRET KERNAL_TOKEN NOT FOUND"
+            echo "❌ SECRET Kernal_TOKEN NOT FOUND"
             exit 1
           else
-            echo "✅ SECRET KERNAL_TOKEN FOUND"
-            echo "Token length is non-zero"
+            echo "✅ SECRET Kernal_TOKEN FOUND"
           fi
 
-      # -------------------------------
-      # CLONE PRIVATE KERNEL (HTTPS + PAT)
-      # -------------------------------
+      # 3️⃣ Clone PRIVATE kernel repo using TOKEN (HTTPS – safest)
       - name: Clone private Vector Nayan kernel
         run: |
           git clone https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
 
-      # -------------------------------
-      # COPY CONFIG INTO KERNEL
-      # -------------------------------
+      # 4️⃣ Inject public run_config.json into kernel
       - name: Inject run_config.json
         run: |
           cp run_config.json kernel/run_config.json
 
-      # -------------------------------
-      # RUN KERNEL
-      # -------------------------------
+      # 5️⃣ Install Python dependencies (IMPORTANT)
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy
+
+      # 6️⃣ Run kernel (BLACK BOX EXECUTION)
       - name: Run Vector Nayan kernel
         run: |
           python kernel/main_runner.py
 
-      # -------------------------------
-      # UPLOAD OUTPUT CSV
-      # -------------------------------
+      # 7️⃣ Upload ONLY CSV output (no code leak)
       - name: Upload simulation output
         uses: actions/upload-artifact@v4
         with:
