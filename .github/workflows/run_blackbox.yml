@@ -12,15 +12,9 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      # --------------------------------------------------
-      # 1️⃣ Checkout run-config repo
-      # --------------------------------------------------
       - name: Checkout run configuration
         uses: actions/checkout@v4
 
-      # --------------------------------------------------
-      # 2️⃣ Validate Kernel token
-      # --------------------------------------------------
       - name: Validate Kernal_TOKEN
         run: |
           if [ -z "${{ secrets.Kernal_TOKEN }}" ]; then
@@ -30,33 +24,20 @@ jobs:
             echo "✅ SECRET Kernal_TOKEN FOUND"
           fi
 
-      # --------------------------------------------------
-      # 3️⃣ Clone PRIVATE Vector Nayan Kernel
-      # --------------------------------------------------
       - name: Clone Vector Nayan V44 Kernel
         run: |
           git clone https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
 
-      # --------------------------------------------------
-      # 4️⃣ Inject run_config.json
-      # --------------------------------------------------
       - name: Inject run_config.json
         run: |
           cp run_config.json kernel/run_config.json
 
-      # --------------------------------------------------
-      # 5️⃣ Setup Python
-      # --------------------------------------------------
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # --------------------------------------------------
-      # 6️⃣ Install **ALL REQUIRED LIBRARIES**
-      # (Nothing missing – Colab compatible)
-      # --------------------------------------------------
-      - name: Install Python dependencies (FULL)
+      - name: Install Python dependencies (FULL – CI SAFE)
         run: |
           python -m pip install --upgrade pip
           pip install \
@@ -67,46 +48,40 @@ jobs:
             scipy \
             seaborn \
             scikit-learn \
-            google-colab \
             ipython \
             notebook \
             tqdm
 
-      # --------------------------------------------------
-      # 7️⃣ Force headless matplotlib (NO DISPLAY)
-      # --------------------------------------------------
+      - name: Create google.colab stub (CI safe)
+        run: |
+          mkdir -p kernel/google/colab
+          cat << 'EOF' > kernel/google/colab/__init__.py
+          class files:
+              @staticmethod
+              def download(*args, **kwargs):
+                  print("⚠️ google.colab.files.download ignored (CI mode)")
+          EOF
+
       - name: Configure matplotlib backend
         run: |
           python - << 'EOF'
           import matplotlib
           matplotlib.use("Agg")
-          print("✅ Matplotlib set to Agg (headless safe)")
+          print("✅ Matplotlib set to Agg")
           EOF
 
-      # --------------------------------------------------
-      # 8️⃣ Run Vector Nayan Kernel (BLACK BOX)
-      # --------------------------------------------------
       - name: Run Vector Nayan V44 Kernel
         run: |
           python kernel/main_runner.py
 
-      # --------------------------------------------------
-      # 9️⃣ Upload CSV outputs
-      # --------------------------------------------------
       - name: Upload CSV outputs
         uses: actions/upload-artifact@v4
         with:
-          name: Vector_Nayan_V44_CSV
-          path: |
-            kernel/**/*.csv
+          name: Vector_Nayan_V44_Output
+          path: kernel/**/*.csv
 
-      # --------------------------------------------------
-      # 🔟 Upload plots if generated
-      # --------------------------------------------------
       - name: Upload plots
         uses: actions/upload-artifact@v4
         with:
-          name: Vector_Nayan_V44_PLOTS
-          path: |
-            kernel/**/*.png
-            kernel/**/*.jpg
+          name: Vector_Nayan_V44_Plots
+          path: kernel/**/*.png
