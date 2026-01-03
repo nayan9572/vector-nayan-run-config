@@ -1,170 +1,55 @@
-# -*- coding: utf-8 -*-
-import numpy as np
-import pandas as pd
-import math
-import json
-import os
-import random
-from collections import deque
-import matplotlib
-matplotlib.use('Agg') # Headless environment ke liye zaroori hai
-import matplotlib.pyplot as plt
-
-# =========================================================
-# 🔌 CONFIG LOADER
-# =========================================================
-CONFIG_PATH = "run_config.json"
-if not os.path.exists(CONFIG_PATH):
-    # Fallback for local testing
-    default_cfg = {
-        "rpm_min": 1500, "rpm_max": 7500, "total_cycles": 100,
-        "bore_mm": 86, "stroke_mm": 86, "conrod_mm": 143,
-        "compression_ratio": 10.5, "ignition_start_deg": -15,
-        "residual_frac": 0.08, "combustion_eff": 0.95
-    }
-    with open(CONFIG_PATH, "w") as f: json.dump(default_cfg, f)
-
-with open(CONFIG_PATH, "r") as f:
-    cfg = json.load(f)
-
-# =========================================================
-# ⚙️ V44 CORE MODULES (Integrated & Fixed)
-# =========================================================
-
-class ThetaDomainProcessAwareKernel:
-    def __init__(self, bore_mm, stroke_mm, conrod_mm, cr):
-        self.bore = bore_mm / 1000.0
-        self.stroke = stroke_mm / 1000.0
-        self.conrod = conrod_mm / 1000.0
-        self.cr = cr
-        self.area = np.pi * (self.bore / 2.0) ** 2
-        self.r = self.stroke / 2.0
-        self.disp_vol = self.area * self.stroke
-        self.clearance_vol = self.disp_vol / (self.cr - 1.0)
-
-    def volume(self, theta):
-        th = np.deg2rad(theta)
-        return self.clearance_vol + self.area * (self.r + self.conrod - (self.r * np.cos(th) + np.sqrt(np.maximum(0.0, self.conrod**2 - (self.r*np.sin(th))**2))))
-
-    def run_cycle(self, rpm, start_angle, eff_mult):
-        theta = np.arange(-180, 181, 1)
-        V = self.volume(theta)
-        # Simplified pressure trace for V44 logic
-        P = (1e5 * (V[0]/V)**1.35) * (1 + 4.0 * eff_mult * np.exp(-((theta - (start_angle+20))**2)/200))
-        T = (300 * (P/1e5)**(0.35/1.35))
-        return {"theta": theta, "pressure": P, "temperature": T, "V": V}
-
-class Chapter7Breathing:
-    def evaluate(self, rpm):
-        ve = np.clip(0.85 + 0.1 * np.sin(rpm/1000), 0.6, 1.1)
-        return {"VE": ve, "Mach_Index": (rpm * 0.00005), "Flow_State": "NORMAL" if ve < 1.0 else "RAM_AIR"}
-
-class CycleValidityDetector:
-    def evaluate(self, P, theta, V, ign):
-        peak_p = np.max(P)
-        if peak_p > 15e6: return "OVERPRESSURE", "Stress limit exceeded"
-        if peak_p < 2e6: return "MISFIRE", "Combustion failure"
-        return "STABLE", "Physics Nominal"
-
-class LoadDriftEstimator:
-    def predict_next_cycle_drift(self, P, theta, rpm, r, bore):
-        # PhD Logic Implementation
-        return np.random.uniform(-0.05, 0.05)
-    def get_stability_index(self): return 98.5
-
-# =========================================================
-# 🚀 MASTER ADAPTER & RUNNER
-# =========================================================
-
-class V44MasterCycleLogger:
-    def __init__(self, cfg):
-        self.cfg = cfg
-        self.kernel = ThetaDomainProcessAwareKernel(cfg["bore_mm"], cfg["stroke_mm"], cfg["conrod_mm"], cfg["compression_ratio"])
-        self.ch7 = Chapter7Breathing()
-        self.ch5 = CycleValidityDetector()
-        self.ch6 = LoadDriftEstimator()
-        self.records = []
-
-    def run(self):
-        print(f"🚀 Running {self.cfg['total_cycles']} Cycles for Vector Nayan V44...")
-        for i in range(self.cfg["total_cycles"]):
-            rpm = np.interp(i, [0, self.cfg["total_cycles"]-1], [self.cfg["rpm_min"], self.cfg["rpm_max"]])
-            ign = self.cfg["ignition_start_deg"]
-            
-            out = self.kernel.run_cycle(rpm, ign, self.cfg["combustion_eff"])
-            breath = self.ch7.evaluate(rpm)
-            eff_P = out["pressure"] * breath["VE"]
-            status, diag = self.ch5.evaluate(eff_P, out["theta"], out["V"], ign)
-            drift = self.ch6.predict_next_cycle_drift(eff_P, out["theta"], rpm, self.kernel.r, self.cfg["bore_mm"])
-            
-            imep = (np.trapz(out["pressure"], out["V"]) / self.kernel.disp_vol) / 1e6
-
-            self.records.append({
-                "Cycle": i, "RPM": round(rpm, 2), "Peak_P_MPa": round(np.max(out['pressure'])/1e6, 2),
-                "Peak_T_K": round(np.max(out['temperature']), 1), "IMEP_MPa": round(imep, 3),
-                "VE": round(breath["VE"], 4), "Status": status, "Diagnosis": diag,
-                "Theta_Drift_Deg": round(drift, 6), "Crank_Stability_Pct": 98.5
-            })
-        return pd.DataFrame(self.records)
-
-if __name__ == "__main__":
-    runner = V44MasterCycleLogger(cfg)
-    df_cycles = runner.run()
-    
-    # Save Final Report
-    df_config = pd.DataFrame([cfg])
-    filename = "Vector_Nayan_V44_Final_Report.csv"
-    
-    # Header box style save
-    with open(filename, "w") as f:
-        f.write("=== VECTOR NAYAN V44 : RUN CONFIGURATION ===\n")
-        df_config.to_csv(f, index=False)
-        f.write("\n=== CYCLE DATA ===\n")
-        df_cycles.to_csv(f, index=False)
-    
-    print(f"✅ FINAL CSV GENERATED → {filename}")
-2. Tera Optimized GitHub Workflow (.github/workflows/main.yml)
-Bhai, isme maine google.colab ke error ko permanent fix kar diya hai aur library installation ko fast banaya hai.
-
-YAML
-
-name: Vector Nayan V44 – Full Cycle CSV Generator
+name: Vector Nayan V44 – Court Grade CI
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'run_config.json'
 
 jobs:
-  blackbox-run:
+  kernel-ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
     steps:
-      - name: Checkout run configuration
-        uses: actions/checkout@v4
+    - name: Checkout config repo
+      uses: actions/checkout@v4
 
-      - name: Clone Private Kernel
-        run: |
-          git clone https://${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+    - name: Clone Kernel
+      run: |
+        git clone https://${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
 
-      - name: Inject run_config.json
-        run: cp run_config.json kernel/run_config.json
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install numpy pandas scipy matplotlib networkx seaborn scikit-learn tqdm
 
-      - name: Install Dependencies
-        run: |
-          pip install numpy pandas matplotlib networkx
+    - name: Create colab stub
+      run: |
+        mkdir -p google
+        echo "" > google/__init__.py
+        cat <<EOF > google/colab.py
+        class files:
+            @staticmethod
+            def download(x): print("CI mode")
+        EOF
 
-      - name: Run V44 Kernel
-        working-directory: kernel
-        run: python main_runner.py
+    - name: Run CI Kernel
+      working-directory: kernel
+      run: |
+        python -u ci_runner.py
 
-      - name: Upload Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: Vector_Nayan_V44_Data
-          path: kernel/*.csv
+    - name: Verify CSV existence
+      run: |
+        if [ ! -f kernel/Vector_Nayan_V44_Cycle_By_Cycle.csv ]; then
+          echo "CSV missing"
+          exit 1
+        fi
+
+    - name: Upload CSV
+      uses: actions/upload-artifact@v4
+      with:
+        name: Vector_Nayan_V44_CSV
+        path: kernel/Vector_Nayan_V44_Cycle_By_Cycle.csv
