@@ -116,3 +116,11 @@ not a side effect.**
 Edit the contract.  
 Run the system.  
 Trust the physics.
+
+## ▶️ Run Simulation
+
+Click the button below to run the simulation using the current
+`run_config.json`.
+
+[![Run in Colab](https://colab.research.google.com/assets/colab-badge.svg)]
+(https://colab.research.google.com/github/YOUR_ORG/vector-nayan-blackbox/blob/main/blackbox_server.ipynb)
