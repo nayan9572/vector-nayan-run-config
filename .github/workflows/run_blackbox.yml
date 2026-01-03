@@ -1,4 +1,4 @@
-name: Vector Nayan V44 Black Box Run
+name: Vector Nayan V44 – Full Cycle CSV Generator
 
 on:
   workflow_dispatch:
@@ -9,79 +9,117 @@ on:
 jobs:
   blackbox-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout run configuration
-        uses: actions/checkout@v4
+    # ----------------------------------------------------
+    # 1️⃣ CHECKOUT RUN CONFIG REPO
+    # ----------------------------------------------------
+    - name: Checkout run configuration
+      uses: actions/checkout@v4
 
-      - name: Validate Kernal_TOKEN
-        run: |
-          if [ -z "${{ secrets.Kernal_TOKEN }}" ]; then
-            echo "❌ SECRET Kernal_TOKEN NOT FOUND"
-            exit 1
-          else
-            echo "✅ SECRET Kernal_TOKEN FOUND"
-          fi
+    # ----------------------------------------------------
+    # 2️⃣ VALIDATE TOKEN (FAIL FAST)
+    # ----------------------------------------------------
+    - name: Validate Kernal_TOKEN
+      env:
+        TOKEN: ${{ secrets.Kernal_TOKEN }}
+      run: |
+        if [ -z "$TOKEN" ]; then
+          echo "❌ Kernal_TOKEN secret not found"
+          exit 1
+        else
+          echo "✅ Kernal_TOKEN detected"
+        fi
 
-      - name: Clone Vector Nayan V44 Kernel
-        run: |
-          git clone https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+    # ----------------------------------------------------
+    # 3️⃣ CLONE PRIVATE VECTOR NAYAN KERNEL
+    # ----------------------------------------------------
+    - name: Clone Vector Nayan V44 Kernel
+      run: |
+        git clone https://${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
 
-      - name: Inject run_config.json
-        run: |
-          cp run_config.json kernel/run_config.json
+    # ----------------------------------------------------
+    # 4️⃣ INJECT run_config.json INTO KERNEL
+    # ----------------------------------------------------
+    - name: Inject run_config.json
+      run: |
+        cp run_config.json kernel/run_config.json
+        ls -l kernel/run_config.json
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+    # ----------------------------------------------------
+    # 5️⃣ SETUP PYTHON (STABLE)
+    # ----------------------------------------------------
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
 
-      - name: Install Python dependencies (FULL – CI SAFE)
-        run: |
-          python -m pip install --upgrade pip
-          pip install \
-            numpy \
-            pandas \
-            matplotlib \
-            networkx \
-            scipy \
-            seaborn \
-            scikit-learn \
-            ipython \
-            notebook \
-            tqdm
+    # ----------------------------------------------------
+    # 6️⃣ INSTALL ALL REQUIRED LIBRARIES (CI SAFE)
+    # ----------------------------------------------------
+    - name: Install Python dependencies (FULL – CI SAFE)
+      run: |
+        python -m pip install --upgrade pip
 
-      - name: Create google.colab stub (CI safe)
-        run: |
-          mkdir -p kernel/google/colab
-          cat << 'EOF' > kernel/google/colab/__init__.py
-          class files:
-              @staticmethod
-              def download(*args, **kwargs):
-                  print("⚠️ google.colab.files.download ignored (CI mode)")
-          EOF
+        pip install \
+          numpy \
+          pandas \
+          scipy \
+          matplotlib \
+          networkx \
+          seaborn \
+          scikit-learn \
+          tqdm \
+          ipython \
+          notebook
 
-      - name: Configure matplotlib backend
-        run: |
-          python - << 'EOF'
-          import matplotlib
-          matplotlib.use("Agg")
-          print("✅ Matplotlib set to Agg")
-          EOF
+    # ----------------------------------------------------
+    # 7️⃣ CREATE GOOGLE.COLAB STUB (PREVENT IMPORT ERROR)
+    # ----------------------------------------------------
+    - name: Create google.colab stub (CI safe)
+      run: |
+        mkdir -p google
+        cat <<EOF > google/__init__.py
+        EOF
+        cat <<EOF > google/colab.py
+        class files:
+            @staticmethod
+            def download(x):
+                print("CI mode: download skipped", x)
+        EOF
 
-      - name: Run Vector Nayan V44 Kernel
-        run: |
-          python kernel/main_runner.py
+    # ----------------------------------------------------
+    # 8️⃣ FORCE NON-GUI MATPLOTLIB BACKEND
+    # ----------------------------------------------------
+    - name: Configure matplotlib backend
+      run: |
+        export MPLBACKEND=Agg
 
-      - name: Upload CSV outputs
-        uses: actions/upload-artifact@v4
-        with:
-          name: Vector_Nayan_V44_Output
-          path: kernel/**/*.csv
+    # ----------------------------------------------------
+    # 9️⃣ RUN VECTOR NAYAN V44 KERNEL
+    # ----------------------------------------------------
+    - name: Run Vector Nayan V44 Kernel
+      working-directory: kernel
+      run: |
+        python main_runner.py
 
-      - name: Upload plots
-        uses: actions/upload-artifact@v4
-        with:
-          name: Vector_Nayan_V44_Plots
-          path: kernel/**/*.png
+    # ----------------------------------------------------
+    # 🔟 UPLOAD CSV OUTPUTS
+    # ----------------------------------------------------
+    - name: Upload CSV outputs
+      uses: actions/upload-artifact@v4
+      with:
+        name: Vector_Nayan_V44_CSV_Output
+        path: |
+          kernel/**/*.csv
+
+    # ----------------------------------------------------
+    # 1️⃣1️⃣ UPLOAD GENERATED PLOTS (IF ANY)
+    # ----------------------------------------------------
+    - name: Upload plots
+      uses: actions/upload-artifact@v4
+      with:
+        name: Vector_Nayan_V44_Plots
+        path: |
+          kernel/**/*.png
