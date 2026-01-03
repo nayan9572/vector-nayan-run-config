@@ -1,0 +1,35 @@
+name: Vector Nayan Black Box Run
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - run_config.json
+
+jobs:
+  blackbox-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout run configuration
+      uses: actions/checkout@v4
+
+    - name: Clone private Vector Nayan kernel
+      env:
+        PRIVATE_TOKEN: ${{ secrets.GITHUB_TOKEN_PRIVATE }}
+      run: |
+        git clone https://${PRIVATE_TOKEN}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+
+    - name: Inject run_config.json
+      run: |
+        cp run_config.json kernel/run_config.json
+
+    - name: Run Vector Nayan kernel
+      run: |
+        python kernel/main_runner.py
+
+    - name: Upload simulation output
+      uses: actions/upload-artifact@v4
+      with:
+        name: Vector_Nayan_V44_Output
+        path: kernel/Vector_Nayan_V44_Final_Report.csv
