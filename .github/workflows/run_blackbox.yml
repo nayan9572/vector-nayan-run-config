@@ -1,4 +1,4 @@
-name: Vector Nayan V44 – Full Kernel CI Run
+name: Vector Nayan V44 — FULL KERNEL CI (AUTHORITATIVE)
 
 on:
   workflow_dispatch:
@@ -8,55 +8,61 @@ on:
       - kernel/**
 
 jobs:
-  v44-kernel-run:
+  v44-full-run:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-    # --------------------------------------------------
-    # 1️⃣ Checkout THIS repo (run_config + workflow)
-    # --------------------------------------------------
-    - name: Checkout run-config repo
+    # ==================================================
+    # 1️⃣ CHECKOUT CONTROLLER REPO
+    # ==================================================
+    - name: Checkout controller repo
       uses: actions/checkout@v4
 
-    # --------------------------------------------------
-    # 2️⃣ Validate Kernel Token (early fail)
-    # --------------------------------------------------
-    - name: Validate Kernel_TOKEN
+    # ==================================================
+    # 2️⃣ VALIDATE TOKEN (FAIL FAST)
+    # ==================================================
+    - name: Validate Kernal_TOKEN
       run: |
         if [ -z "${{ secrets.Kernal_TOKEN }}" ]; then
-          echo "❌ Kernal_TOKEN secret missing"
+          echo "❌ Kernal_TOKEN missing"
           exit 1
-        else
-          echo "✅ Kernal_TOKEN found"
         fi
+        echo "✅ Kernal_TOKEN OK"
 
-    # --------------------------------------------------
-    # 3️⃣ Clone PRIVATE Vector Nayan Kernel
-    # --------------------------------------------------
+    # ==================================================
+    # 3️⃣ CLONE PRIVATE KERNEL (ONLY SOURCE OF TRUTH)
+    # ==================================================
     - name: Clone Vector Nayan V44 Kernel
       run: |
-        git clone https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
+        rm -rf kernel
+        git clone \
+          https://x-access-token:${{ secrets.Kernal_TOKEN }}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git \
+          kernel
+        echo "✅ Kernel cloned"
+        ls kernel
 
-    # --------------------------------------------------
-    # 4️⃣ Inject run_config.json INTO kernel folder
-    # --------------------------------------------------
+    # ==================================================
+    # 4️⃣ INJECT RUN CONFIG
+    # ==================================================
     - name: Inject run_config.json
       run: |
         cp run_config.json kernel/run_config.json
         echo "📦 run_config.json injected"
+        cat kernel/run_config.json
 
-    # --------------------------------------------------
-    # 5️⃣ Setup Python
-    # --------------------------------------------------
+    # ==================================================
+    # 5️⃣ PYTHON SETUP
+    # ==================================================
     - name: Setup Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    # --------------------------------------------------
-    # 6️⃣ Install ALL REQUIRED LIBRARIES (CI SAFE)
-    # --------------------------------------------------
-    - name: Install Python dependencies (FULL – CI SAFE)
+    # ==================================================
+    # 6️⃣ INSTALL ALL REQUIRED LIBRARIES (EXPLICIT)
+    # ==================================================
+    - name: Install Python dependencies (FULL)
       run: |
         python -m pip install --upgrade pip
         pip install \
@@ -69,51 +75,59 @@ jobs:
           scikit-learn \
           tqdm
 
-    # --------------------------------------------------
-    # 7️⃣ CI SAFE stub for google.colab (NO ERROR)
-    # --------------------------------------------------
-    - name: Create google.colab stub (CI safe)
+    # ==================================================
+    # 7️⃣ CI-SAFE GOOGLE COLAB STUB
+    # ==================================================
+    - name: Stub google.colab (CI SAFE)
       run: |
-        mkdir -p google/colab
-        echo "def download(x): print('CI MODE: download skipped')" > google/colab/files.py
-        touch google/__init__.py
-        touch google/colab/__init__.py
+        mkdir -p kernel/google/colab
+        echo "def download(x): print('CI MODE: download skipped')" > kernel/google/colab/files.py
+        touch kernel/google/__init__.py
+        touch kernel/google/colab/__init__.py
+        echo "✅ google.colab stubbed"
 
-    # --------------------------------------------------
-    # 8️⃣ Force matplotlib to NON-GUI backend
-    # --------------------------------------------------
-    - name: Configure matplotlib backend
+    # ==================================================
+    # 8️⃣ FORCE NON-GUI BACKEND
+    # ==================================================
+    - name: Force matplotlib Agg backend
       run: |
-        echo "import matplotlib; matplotlib.use('Agg')" > mpl_fix.py
+        export MPLBACKEND=Agg
+        echo "✅ matplotlib backend set to Agg"
 
-    # --------------------------------------------------
-    # 9️⃣ Run Vector Nayan V44 Kernel
-    # --------------------------------------------------
-    - name: Run Vector Nayan V44 Kernel
+    # ==================================================
+    # 9️⃣ HARD SANITY CHECK (FILES)
+    # ==================================================
+    - name: Kernel sanity check
+      run: |
+        echo "📂 Kernel contents:"
+        ls kernel
+        echo "🔎 Runner files:"
+        ls kernel | grep -E "runner|main"
+        test -f kernel/runner.py || (echo "❌ runner.py missing" && exit 1)
+
+    # ==================================================
+    # 🔟 RUN THE ONLY ALLOWED ENTRY POINT
+    # ==================================================
+    - name: Run Vector Nayan V44 (AUTHORITATIVE)
       working-directory: kernel
       run: |
-        echo "===== VECTOR NAYAN V44 CI RUN START ====="
-        python main_runner.py
-        echo "===== VECTOR NAYAN V44 CI RUN END ====="
+        echo "🚀 VECTOR NAYAN V44 — CI RUN START"
+        python runner.py
+        echo "🏁 VECTOR NAYAN V44 — CI RUN END"
 
-    # --------------------------------------------------
-    # 🔟 Verify CSV existence (HARD CHECK)
-    # --------------------------------------------------
-    - name: Verify CSV existence
+    # ==================================================
+    # 1️⃣1️⃣ VERIFY CSV (STRICT)
+    # ==================================================
+    - name: Verify CSV output
       run: |
-        if ls kernel/*.csv 1> /dev/null 2>&1; then
-          echo "✅ CSV files found"
-          ls kernel/*.csv
-        else
-          echo "❌ No CSV files generated"
-          exit 1
-        fi
+        echo "📄 CSV files:"
+        ls kernel/*.csv || (echo "❌ CSV NOT FOUND" && exit 1)
 
-    # --------------------------------------------------
-    # 1️⃣1️⃣ Upload CSV as GitHub Artifact
-    # --------------------------------------------------
-    - name: Upload CSV outputs
+    # ==================================================
+    # 1️⃣2️⃣ UPLOAD CSV ARTIFACT
+    # ==================================================
+    - name: Upload CSV Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Vector_Nayan_V44_CSV_Output
+        name: Vector_Nayan_V44_Final_CSV
         path: kernel/*.csv
