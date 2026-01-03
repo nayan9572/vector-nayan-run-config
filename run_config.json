@@ -1,0 +1,14 @@
+{
+  "rpm_min": 1500,
+  "rpm_max": 6500,
+  "total_cycles": 2000,
+
+  "bore_mm": 86.0,
+  "stroke_mm": 86.0,
+  "conrod_mm": 143.0,
+  "compression_ratio": 10.5,
+
+  "ignition_start_deg": -10,
+  "residual_frac": 0.08,
+  "combustion_eff": 1.0
+}
