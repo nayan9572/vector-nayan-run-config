@@ -18,7 +18,7 @@ jobs:
       # 2️⃣ Clone PRIVATE kernel repo using PAT (NO SSH)
       - name: Clone private Vector Nayan kernel
         env:
-          KERNAL_TOKEN: ${{ secrets.KERNAL_TOKEN }}
+          KERNAL_TOKEN: ${{ secrets.Kernal_TOKEN }}
         run: |
           git clone https://x-access-token:${KERNAL_TOKEN}@github.com/nayan9572/VECTOR_NAYAN_V44_KERNAL.git kernel
 
