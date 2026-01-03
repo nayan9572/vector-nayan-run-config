@@ -119,8 +119,18 @@ Trust the physics.
 
 ## ▶️ Run Simulation
 
-Click the button below to run the simulation using the current
-`run_config.json`.
+This simulation runs using a secure, server-side black-box execution system.
 
-[![Run in Colab](https://colab.research.google.com/assets/colab-badge.svg)]
-(https://colab.research.google.com/github/YOUR_ORG/vector-nayan-blackbox/blob/main/blackbox_server.ipynb)
+### How to run
+
+1. Edit `run_config.json`
+2. Commit and push your changes
+3. Open the **Actions** tab of this repository
+4. Select **Vector Nayan Black Box Run**
+5. Click **Run workflow**
+
+Once the run completes, the output CSV will be available
+as a downloadable artifact in the workflow results.
+
+> 🔒 The engine kernel and all physics logic are executed in a protected
+> environment and are never exposed.
