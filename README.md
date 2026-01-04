@@ -1,136 +1,172 @@
-# 🚀 Vector Nayan — Run Configuration
+# 🧭 Vector Nayan — θ-Domain Engine Boundary System  
+**Black-Box • Physics-Locked • Configuration-Driven**
 
-A **lightweight, public configuration interface** for the Vector Nayan V44
-physics-driven engine simulation system.
-
-This repository does **not** contain any engine code, models, or solvers.  
-It provides a **clean, controlled input contract** (`run_config.json`) used by
-the Vector Nayan execution system.
+> This is a **protected engineering system**, not a code repository.  
+> What is exposed is *control and behavior* — not internal physics logic.
 
 ---
 
-## 🎯 Why this configuration exists
+## 🚦 What this system is
 
-Modern engine simulation workflows fail not because of physics,
-but because of **uncontrolled inputs** and **opaque assumptions**.
+Vector Nayan is a **θ-domain engine behavior system** built for **early-stage validation**  
+before CFD, ECU logic, or hardware calibration.
 
-Vector Nayan solves this by separating:
+It answers one core engineering question:
 
-- **What users can change** → Configuration  
-- **What must remain protected** → Physics kernel  
+> **Is this operating direction physically stable — or already broken?**
 
-This repository defines the **only allowed boundary** for user interaction.
+This system is intentionally designed as a **black-box execution engine**.
 
----
-
-## 🧠 What this configuration controls
-
-| Category | What user can tune | Why it matters |
-|--------|------------------|----------------|
-| ⚙️ Operating Range | RPM min / max | Explore low, nominal, and high-speed behavior |
-| 🔄 Cycles | Total cycles | Stability, drift, convergence analysis |
-| 📐 Geometry | Bore, stroke, conrod | Real engine architecture sensitivity |
-| 🧯 Compression | Compression ratio | IMEP, knock margin, efficiency |
-| 🔥 Ignition | Start angle | Combustion phasing & misfire zones |
-| ♻️ Residuals | Residual fraction | Trapped gas realism |
-| ⚡ Efficiency | Combustion efficiency | Load & loss sensitivity |
-
-All values are **explicit, auditable, and deterministic**.
+- Physics is **locked**
+- Assumptions are **explicit**
+- Outputs are **inspectable**
+- Calibration is **external and modular**
 
 ---
 
-## 📊 What makes Vector Nayan robust (comparison)
+## 🔒 System Protection Model (Important)
 
-| Feature | Vector Nayan | Typical Black-Box Tools |
-|------|-------------|-------------------------|
-| 🔬 Physics-first | ✅ Yes | ❌ Often empirical |
-| 🧭 Cycle-aware | ✅ Yes | ❌ Snapshot-based |
-| 🧠 Drift detection | ✅ Built-in | ❌ Post-processing |
-| ⚠️ Misfire logic | ✅ Physics-aware | ❌ Threshold only |
-| 🔒 Kernel safety | ✅ Fully protected | ❌ Often exposed |
-| 📄 Input clarity | ✅ JSON contract | ❌ Hidden UI logic |
-| 🧪 Reproducibility | ✅ Deterministic | ❌ Version-fragile |
+| Layer | Status |
+|---|---|
+| Physics kernel | 🔐 Fully locked |
+| Diagnostics logic | 🔐 Fully locked |
+| Drift & safety logic | 🔐 Fully locked |
+| Execution environment | 🔐 Server-side only |
+| User access | ✅ Configuration only |
+| Output access | ✅ CSV artifacts |
 
----
-
-## 🧱 Design philosophy
-
-| Principle | Implementation |
-|---------|----------------|
-| 🔐 Separation of concerns | Config ≠ Kernel |
-| 📜 Auditability | Single JSON contract |
-| 🧪 Scientific control | Explicit assumptions |
-| 🧩 Modularity | Plug-and-run pipeline |
-| 🚫 No magic | No hidden defaults |
+There is **no partial access**, **no tunable shortcuts**, and **no exposed internals**.
 
 ---
 
-## 📌 Boundary conditions (important)
+## 📦 Repository Contents (Minimal by Design)
+vector-nayan-run-config/ ├── run_config.json   ← user-editable engineering contract └── README.md         ← system definition, scope, limits
 
-This configuration **does not**:
-
-- ❌ Modify physics equations  
-- ❌ Change combustion models  
-- ❌ Alter thermodynamic constants  
-- ❌ Bypass safety logic  
-
-All physics remain **authoritative and protected**.
+Nothing else is required.  
+No source files.  
+No scripts.  
+No hidden knobs.
 
 ---
 
-## ⚠️ Assumptions (explicit)
+## 🎛️ What you can change vs what you cannot
 
-| Assumption | Reason |
-|----------|--------|
-| Single-zone cylinder model | Cycle-level robustness |
-| Ideal gas framework | Deterministic behavior |
-| Fixed wall temperature | Controlled heat loss |
-| No external calibration | Physics-first validation |
+| Category | User Control | System Control |
+|---|---|---|
+| RPM range | ✅ Yes | ❌ |
+| Ignition timing | ✅ Yes | ❌ |
+| Cycle count | ✅ Yes | ❌ |
+| Engine geometry | ✅ Yes | ❌ |
+| Combustion physics | ❌ | ✅ |
+| Gas dynamics logic | ❌ | ✅ |
+| Diagnostics thresholds | ❌ | ✅ |
+| Drift & safe-mode logic | ❌ | ✅ |
 
-These assumptions are **intentional**, not limitations.
-
----
-
-## 📁 Repository contents
-vector-nayan-run-config/ ├── run_config.json   ← user-editable contract └── README.md         ← this document
-Copy code
-
-Nothing else is required.
+➡️ **Configuration is the interface.  
+Physics is the authority.**
 
 ---
 
-## 🧠 Who should use this
+## 🔬 What the system evaluates (Outputs)
 
-- 🔧 Engine researchers validating cycle behavior  
-- 📊 Analysts studying IMEP, drift, and stability  
-- 🧪 Engineers testing boundary conditions  
-- 🧱 Teams needing **safe, repeatable simulations**
+| Domain | What you get |
+|---|---|
+| Combustion | Pressure & temperature trends |
+| Stability | Cycle-to-cycle repeatability |
+| Diagnostics | Misfire, early-fire, low compression |
+| Breathing | VE trends & flow limits |
+| Mechanical | Load-induced θ drift |
+| Safety | Automatic stabilization response |
+
+All results are delivered as **CSV files** for independent analysis.
 
 ---
 
-## ✅ Summary (one line)
+## 🔁 Calibration Philosophy (Very Important)
 
-> **Vector Nayan treats configuration as a first-class engineering artifact —
+This system is **calibration-ready**, not calibration-dependent.
+
+| Aspect | Behavior |
+|---|---|
+| Default model | Generic petrol engine |
+| Calibration | External, plug-and-play |
+| Vehicle specific tuning | ✅ Supported |
+| Engine family changes | ✅ Supported |
+| Architecture changes | ❌ Not required |
+
+Calibration is treated as a **replaceable layer**, not baked logic.
+
+You can adapt the same system to:
+- A small commuter engine  
+- A performance engine  
+- A research prototype  
+- Even non-automotive reciprocating systems  
+
+➡️ **The core architecture does not change. Only calibration does.**
+
+---
+
+## ▶️ How execution works
+
+This repository uses a **secure CI-based execution flow**.
+
+### Run steps
+
+1. Edit `run_config.json`
+2. Commit & push
+3. Open the **Actions** tab
+4. Select **Vector Nayan Black Box Run**
+5. Click **Run workflow**
+
+After completion:
+- 📁 Download the generated **CSV artifacts**
+- 📊 Inspect trends, stability, and boundaries
+
+> 🔐 The physics engine executes in a protected environment  
+> and is never exposed to the user.
+
+---
+
+## 🧪 Who this system is for
+
+- 🔧 Engine researchers testing cycle behavior  
+- 📊 Analysts studying stability & drift  
+- 🧪 Engineers exploring operating boundaries  
+- 🧱 Teams needing **safe, repeatable early validation**
+
+If you need **certified numbers**, this is not the tool.  
+If you need **directional truth**, this is exactly the tool.
+
+---
+
+## ⚠️ What this system will NOT do
+
+- ❌ Replace CFD / GT-Power / ANSYS  
+- ❌ Predict certified torque or emissions  
+- ❌ Auto-tune engines  
+- ❌ Hide uncertainty behind ML  
+
+Boundaries are **shown**, not smoothed.
+
+---
+
+## 🧠 Design Principle (One Line)
+
+> **Configuration is treated as a first-class engineering artifact —  
 not a side effect.**
 
 Edit the contract.  
 Run the system.  
-Trust the physics.
+Trust — and challenge — the physics.
 
-## ▶️ Run Simulation
+---
 
-This simulation runs using a secure, server-side black-box execution system.
+## 📌 Status
 
-### How to run
+- ✔ Architecture complete  
+- ✔ Validation performed  
+- ✔ Outputs reproducible  
+- ✔ Calibration extensible  
 
-1. Edit `run_config.json`
-2. Commit and push your changes
-3. Open the **Actions** tab of this repository
-4. Select **Vector Nayan Black Box Run**
-5. Click **Run workflow**
-
-Once the run completes, the output CSV will be available
-as a downloadable artifact in the workflow results.
-
-> 🔒 The engine kernel and all physics logic are executed in a protected
-> environment and are never exposed.
+This is a **research-grade boundary system**,  
+not a demo script.
