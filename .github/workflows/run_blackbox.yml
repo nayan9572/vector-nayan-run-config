@@ -136,4 +136,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
        name: Dynamic-Influence-Jungle
-       path: dynamic_influence_jungle.png
+       path: kernel/dynamic_influence_jungle.png
